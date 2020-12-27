@@ -11,14 +11,14 @@ import time
 
 
 class typeracer_bot:
-    def __init__(self):
+    def __init__(self) -> None:
         pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
         self.driver = Chrome(
             executable_path="C:\\Program Files (x86)\\chromedriver.exe")
         self.driver.get("https://play.typeracer.com/")
         self.driver.maximize_window()
 
-    def find_practice_mode(self):
+    def find_practice_mode(self) -> None:
         try:
             wait = WebDriverWait(self.driver, 10)
             wait.until(presence_of_all_elements_located(
@@ -26,12 +26,12 @@ class typeracer_bot:
         except TimeoutException:
             self.__del__()
 
-    def click_practice_button(self):
+    def click_practice_button(self) -> None:
         practice_yourself_button = self.driver.find_element_by_xpath(
             "//*[@id=\"gwt-uid-2\"]/a")
         practice_yourself_button.click()
 
-    def grab_pixels_from_window_screen(self):
+    def grab_pixels_from_window_screen(self) -> list[int]:
         # top half of maximized screen
         self.driver.save_screenshot("screen.png")
         top_half_of_window = Image.open("screen.png")
@@ -46,7 +46,7 @@ class typeracer_bot:
         pixels = [list(pixel_row) for pixel_row in screen]
         return [bottom_half_of_screen.width, pixels]
 
-    def locate_blue_background(self, image_data):
+    def locate_blue_background(self, image_data: list[int]) -> list[int]:
         screen_width = image_data[0]
         pixel_row = image_data[1]
         left, top = 0, 0
@@ -64,16 +64,16 @@ class typeracer_bot:
 
         return [0, 0]  # default value
 
-    def take_screenshot_of_text(self, coordinates):
+    def take_screenshot_of_text(self, coordinates: list[int]) -> None:
         text_image = Image.open("screen.png")
         text_image = text_image.crop(
             (coordinates[0], coordinates[1], coordinates[0] + 910, coordinates[1] + 150))
         text_image.save("text.png")
 
-    def process_text_from_image(self):
+    def process_text_from_image(self) -> str:
         return pytesseract.image_to_string(Image.open("text.png"))
 
-    def automate_keyboard_typing(self):
+    def automate_keyboard_typing(self) -> None:
         text = [char for char in self.process_text_from_image()]
         for char in range(len(text)):
             if text[char] == '\n' and text[char+1] == '\n':
@@ -85,10 +85,7 @@ class typeracer_bot:
             else:
                 pyautogui.write(text[char], interval=0.01)
 
-    def display_words_per_minute(self):
-        self.driver.execute_script("window.scrollTo(0, 0)")
-
-    def __del__(self):
+    def __del__(self) -> None:
         self.driver.quit()
 
 
@@ -101,7 +98,6 @@ def main():
     location = bot.locate_blue_background(arr)
     bot.take_screenshot_of_text(location)
     bot.automate_keyboard_typing()
-    bot.display_words_per_minute()
 
 
 if __name__ == "__main__":
