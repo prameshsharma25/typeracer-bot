@@ -7,14 +7,12 @@ from PIL import Image
 import numpy
 import pytesseract
 import pyautogui
-import enchant
 import time
 
 
 class typeracer_bot:
     def __init__(self):
         pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-        self.dictionary = enchant.Dict("en_US")
         self.driver = Chrome(
             executable_path="C:\\Program Files (x86)\\chromedriver.exe")
         self.driver.get("https://play.typeracer.com/")
@@ -75,29 +73,20 @@ class typeracer_bot:
     def process_text_from_image(self):
         return pytesseract.image_to_string(Image.open("text.png"))
 
-    def generate_characters_from_text(self, text):
-        for word in text.split(" "):
-            yield(word)
-
-    def spell_checker(self, word):
-        phrase = ""
-        for char in range(len(word)):
-            phrase += word[char]
-            if self.dictionary.check(phrase) and self.dictionary.check(word[char+1:]):
-                return f" {phrase} {word[char+1]} "
-
-        return ""  # in case two words can't be found
-
     def automate_keyboard_typing(self):
-        paragraph = self.process_text_from_image()
-        while True:
-            for word in self.generate_characters_from_text(paragraph):
-                if self.dictionary.check(word):
-                    pyautogui.write(word)
-                    pyautogui.write(" ", interval=0.01)
-                else:
-                    pyautogui.write(self.spell_checker(word))
-            break
+        text = [char for char in self.process_text_from_image()]
+        for char in range(len(text)):
+            if text[char] == '\n' and text[char+1] == '\n':
+                break
+            elif text[char] == '|':
+                pyautogui.write('I', interval=0.01)
+            elif text[char] == '\n':
+                pyautogui.write(" ", interval=0.01)
+            else:
+                pyautogui.write(text[char], interval=0.01)
+
+    def display_words_per_minute(self):
+        self.driver.execute_script("window.scrollTo(0, 0)")
 
     def __del__(self):
         self.driver.quit()
@@ -107,11 +96,12 @@ def main():
     bot = typeracer_bot()
     bot.find_practice_mode()
     bot.click_practice_button()
-    time.sleep(6)
+    time.sleep(2)
     arr = bot.grab_pixels_from_window_screen()
     location = bot.locate_blue_background(arr)
     bot.take_screenshot_of_text(location)
     bot.automate_keyboard_typing()
+    bot.display_words_per_minute()
 
 
 if __name__ == "__main__":
